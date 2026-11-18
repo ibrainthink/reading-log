@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#faf9f5">
+<title>독서 목록</title>
+<style>
+:root{--bg:#faf9f5;--card:#fff;--ink:#1f1e1d;--sub:#5f5e5a;--mute:#8a8984;--line:#e3e1d8;--accent:#2f5fb3;--accentbg:#e6eefb;--ok:#2e7d4f;--okbg:#e3f3ea;--danger:#b3261e;}
+@media (prefers-color-scheme:dark){:root{--bg:#1c1b19;--card:#262522;--ink:#f1efe8;--sub:#bdbbb2;--mute:#8f8d85;--line:#3a3935;--accent:#8fb4f0;--accentbg:#25324a;--ok:#7bd0a0;--okbg:#1f3a2b;--danger:#f2a29b;}}
+*{box-sizing:border-box}
+html{font-size:18px}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif;line-height:1.5}
+.wrap{max-width:640px;margin:0 auto;padding:12px 14px 90px}
+header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+h1{font-size:1.25rem;font-weight:600;margin:0;cursor:pointer}
+.fs{display:flex;align-items:center;gap:6px}
+.fs button{width:2.4rem;height:2.4rem;font-size:1rem;padding:0}
+button{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.5rem .8rem;cursor:pointer;min-height:2.4rem}
+button:active{transform:scale(.98)}
+button.pri{background:var(--ink);color:var(--bg);border-color:var(--ink);font-weight:600}
+button.ok{background:var(--okbg);color:var(--ok);border-color:transparent;font-weight:600}
+button.del{color:var(--danger)}
+input,select{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.5rem .7rem;width:100%;min-height:2.6rem}
+.row{display:flex;gap:8px;margin-bottom:10px}
+.tabs{display:flex;gap:8px;margin-bottom:12px}
+.tab{flex:1;text-align:center;padding:.6rem;border-radius:10px;background:var(--card);border:1px solid var(--line);color:var(--sub);cursor:pointer}
+.tab.on{background:var(--accentbg);color:var(--accent);border-color:transparent;font-weight:600}
+.vt{display:none;gap:8px;margin-bottom:10px}.vt.on{display:flex}.vt button{flex:1}.vt button.on{background:var(--accentbg);color:var(--accent);border-color:transparent;font-weight:600}
+.card{display:flex;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:10px}
+.cover{width:5.2rem;height:7.4rem;flex-shrink:0;border-radius:6px;background:var(--line);object-fit:cover;cursor:zoom-in;display:flex;align-items:center;justify-content:center;color:var(--mute);font-size:.75rem;text-align:center;border:0}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.grid .cover{width:100%;height:auto;aspect-ratio:5.2/7.4;font-size:.8rem;padding:4px;word-break:keep-all;overflow:hidden}
+.info{flex:1;min-width:0}
+.no{font-size:.8rem;color:var(--mute)}
+.t{font-size:1.05rem;font-weight:600;word-break:keep-all;overflow-wrap:anywhere}
+.a{font-size:.9rem;color:var(--sub);margin-bottom:6px}
+.bar{height:.5rem;background:var(--line);border-radius:4px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent)}
+.done .bar i{background:var(--ok)}
+.meta{display:flex;justify-content:space-between;font-size:.85rem;color:var(--sub);margin:4px 0 8px;gap:8px;flex-wrap:wrap}
+.acts{display:flex;gap:6px;flex-wrap:wrap}
+.acts button{font-size:.85rem;padding:.35rem .7rem;min-height:2.2rem}
+.empty{text-align:center;color:var(--sub);padding:2.5rem 1rem}
+.add{position:fixed;left:0;right:0;bottom:0;padding:10px 14px calc(10px + env(safe-area-inset-bottom));background:linear-gradient(transparent,var(--bg) 40%)}
+.add button{display:block;width:100%;max-width:640px;margin:0 auto;padding:.8rem;font-size:1rem}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:flex-start;justify-content:center;overflow:auto;z-index:10;padding:16px 10px}
+.ov.on{display:flex}
+.modal{background:var(--card);border-radius:14px;padding:14px;width:100%;max-width:520px}
+.modal h2{margin:0 0 10px;font-size:1.1rem}
+.f{margin-bottom:10px}
+.f label{display:block;font-size:.8rem;color:var(--sub);margin-bottom:3px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.prev{display:flex;gap:12px;align-items:center;margin-bottom:10px}
+.prev .cover{cursor:default}
+.hint{font-size:.85rem;color:var(--sub)}
+.zoom{background:rgba(0,0,0,.92);align-items:center;padding:10px}
+.zoom img{max-width:100%;max-height:72vh;border-radius:6px}
+.note{font-size:.8rem;color:var(--mute);text-align:center;margin:6px 0}
+.err{color:var(--danger);font-size:.85rem}
+.ovc{z-index:20;align-items:center}
+.cwrap{background:var(--card);border-radius:14px;padding:12px;width:100%;max-width:560px}
+.cw{position:relative;display:block;width:fit-content;max-width:100%;margin:0 auto;overflow:hidden;touch-action:none;line-height:0;border-radius:6px}
+#cimg{max-width:100%;max-height:60vh;display:block;user-select:none;-webkit-user-select:none}
+#cbox{position:absolute;border:2px solid #fff;box-shadow:0 0 0 9999px rgba(0,0,0,.55);cursor:move;touch-action:none}
+#chandle{position:absolute;right:-2px;bottom:-2px;width:34px;height:34px;background:#fff;border-radius:6px 0 0 0;cursor:nwse-resize;touch-action:none;opacity:.9}
+.chips{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.chip{display:flex;align-items:center;gap:6px;font-size:.85rem;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:4px 6px}
+.chip span{flex:1;min-width:0;overflow-wrap:anywhere}
+.chip button{font-size:.8rem;padding:.2rem .5rem;min-height:1.8rem}
+.tools{display:flex;gap:8px;justify-content:center;margin-top:14px}
+.tools button{font-size:.85rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+<h1 id="ttl" title="누르면 이름을 바꿀 수 있어요">나방이의 독서 목록</h1>
+<div class="fs"><button id="fm" aria-label="글자 작게">A−</button><button id="fp" aria-label="글자 크게">A+</button></div>
+</header>
+<div class="row">
+<input id="q" type="search" placeholder="제목 또는 작가로 검색">
+<select id="yr" style="width:7.5rem" aria-label="연도"></select>
+</div>
+<div class="tabs"><div class="tab on" id="t0" role="button">읽는 중</div><div class="tab" id="t1" role="button">완료</div></div>
+<div class="vt" id="vt"><button id="v0">한 줄씩 보기</button><button id="v1">바둑판 보기</button></div>
+<div id="list"></div>
+<div class="note" id="note"></div>
+<div class="tools">
+<button id="bk">백업 저장</button>
+<button id="rs">백업 불러오기</button>
+<input id="rsf" type="file" accept=".json,application/json" style="display:none">
+</div>
+<div class="note">책 목록은 이 휴대폰(이 브라우저)에만 저장돼요. 폰을 바꾸기 전에 꼭 백업 저장을 해 두세요.</div>
+</div>
+<div class="add"><button class="pri" id="addbtn">책 사진 찍어서 추가</button></div>
+
+<div class="ov" id="ovf"><div class="modal">
+<h2 id="mt">책 추가</h2>
+<div class="prev">
+<div class="cover" id="pc" style="cursor:default">표지</div>
+<div style="flex:1">
+<input id="file" type="file" accept="image/*" style="display:none">
+<button id="pick" style="width:100%">표지 사진 찍기 / 고르기</button>
+<button id="ocr" style="width:100%;margin-top:6px;display:none">표지 글자 읽기</button>
+<div class="hint" id="ai" style="margin-top:6px"></div>
+</div>
+</div>
+<div class="chips" id="chips"></div>
+<div class="f" style="margin-top:10px"><label for="ft">제목</label><input id="ft"></div>
+<div class="f"><label for="fa">작가</label><input id="fa"></div>
+<div class="g2">
+<div class="f"><label for="ftot">총 쪽수</label><input id="ftot" type="number" inputmode="numeric" min="0"></div>
+<div class="f"><label for="fr">읽은 쪽수</label><input id="fr" type="number" inputmode="numeric" min="0"></div>
+</div>
+<div class="g2">
+<div class="f"><label for="fs2">읽기 시작한 날짜</label><input id="fs2" type="date"></div>
+<div class="f"><label for="fe">다 읽은 날짜</label><input id="fe" type="date"></div>
+</div>
+<div class="f"><label><input id="fd" type="checkbox" style="width:auto;min-height:0;margin-right:6px">다 읽었어요 (완료)</label></div>
+<div class="err" id="fer"></div>
+<div class="row" style="margin:12px 0 0">
+<button id="fdel" class="del" style="display:none">삭제</button>
+<button id="fc" style="flex:1">취소</button>
+<button id="fok" class="pri" style="flex:1">저장</button>
+</div>
+</div></div>
+
+<div class="ov ovc" id="ovc"><div class="cwrap">
+<div class="hint" style="margin-bottom:8px">책 표지만 남도록 흰 테두리를 옮기고, 오른쪽 아래 모서리를 끌어 크기를 맞추세요.</div>
+<div class="cw" id="cw"><img id="cimg" alt="올린 사진"><div id="cbox"><div id="chandle"></div></div></div>
+<div class="row" style="margin:12px 0 0"><button id="cx" style="flex:1">취소</button><button id="cok" class="pri" style="flex:1">이 부분으로 저장</button></div>
+</div></div>
+
+<div class="ov zoom" id="ovz"><div style="text-align:center;max-width:100%"><img id="zi" alt="책 표지 확대"><div id="zc" style="color:#fff;margin-top:8px;font-weight:600"></div><div id="zd" style="color:#ddd;font-size:.9rem"></div><button id="ze" style="margin-top:10px">수정</button></div></div>
+
+<script>
+(function(){
+var books=[],tab=0,editId=null,curCover="",db=null,zid=null,view=0;
+var $=function(i){return document.getElementById(i)};
+function today(){var d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function lg(k){try{return localStorage.getItem(k)}catch(e){return null}}
+function ls(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+
+var fsz=parseInt(lg("nb-fs"))||18;
+function setFs(n){fsz=Math.max(14,Math.min(34,n));document.documentElement.style.fontSize=fsz+"px";ls("nb-fs",fsz)}
+setFs(fsz);
+$("fm").onclick=function(){setFs(fsz-2)};$("fp").onclick=function(){setFs(fsz+2)};
+view=parseInt(lg("nb-view"))===1?1:0;
+var title=lg("nb-title")||"나방이의 독서 목록";
+function setTitle(){$("ttl").textContent=title;document.title=title}
+setTitle();
+$("ttl").onclick=function(){var n=prompt("목록 이름을 적어 주세요",title);if(n&&n.trim()){title=n.trim();ls("nb-title",title);setTitle()}};
+
+function openDb(){return new Promise(function(res,rej){
+ if(!window.indexedDB){rej();return}
+ var r=indexedDB.open("nabang-books",1);
+ r.onupgradeneeded=function(){r.result.createObjectStore("b",{keyPath:"id"})};
+ r.onsuccess=function(){res(r.result)};r.onerror=function(){rej(r.error)}})}
+function pr(rq){return new Promise(function(res,rej){rq.onsuccess=function(){res(rq.result)};rq.onerror=function(){rej(rq.error)}})}
+function st(m){return db.transaction("b",m).objectStore("b")}
+async function putBook(b){if(!db)return;try{await pr(st("readwrite").put(b))}catch(e){$("note").textContent="저장하지 못했어요. 저장 공간을 확인해 주세요."}}
+async function saveBook(b){var i=books.findIndex(function(x){return x.id===b.id});if(i<0)books.push(b);else books[i]=b;render();await putBook(b)}
+async function delBook(id){books=books.filter(function(x){return x.id!==id});render();if(db){try{await pr(st("readwrite").delete(id))}catch(e){}}}
+
+function yearOf(b){var d=b.done?(b.end||b.start):b.start;return d?d.slice(0,4):""}
+function fillYears(){
+ var cur=$("yr").value||"",ys={};books.forEach(function(b){var y=yearOf(b);if(y)ys[y]=1});
+ var arr=Object.keys(ys).sort().reverse();
+ $("yr").innerHTML='<option value="">전체 연도</option>'+arr.map(function(y){return'<option value="'+y+'">'+y+'년</option>'}).join("");
+ $("yr").value=arr.indexOf(cur)>=0?cur:"";
+}
+function render(){
+ fillYears();
+ var q=$("q").value.trim().toLowerCase(),y=$("yr").value;
+ var nr=books.filter(function(b){return!b.done}).length,nd=books.length-nr;
+ $("t0").textContent="읽는 중 ("+nr+")";$("t1").textContent="완료 ("+nd+")";
+ $("vt").className="vt"+(tab===1?" on":"");$("v0").className=view===0?"on":"";$("v1").className=view===1?"on":"";
+ $("t0").className="tab"+(tab===0?" on":"");$("t1").className="tab"+(tab===1?" on":"");
+ var L=books.filter(function(b){
+  if(!!b.done!==(tab===1))return false;
+  if(y&&yearOf(b)!==y)return false;
+  if(q&&(b.title||"").toLowerCase().indexOf(q)<0&&(b.author||"").toLowerCase().indexOf(q)<0)return false;
+  return true}).sort(function(a,b){return(b.no||0)-(a.no||0)});
+ if(!L.length){$("list").innerHTML='<div class="empty">'+(books.length?"조건에 맞는 책이 없어요.":"아직 책이 없어요.<br>아래 버튼으로 첫 책을 추가해 보세요.")+'</div>';return}
+ if(tab===1&&view===1){$("list").innerHTML='<div class="grid">'+L.map(function(b){return b.cover?'<img class="cover" data-z="'+b.id+'" src="'+b.cover+'" alt="'+esc(b.title)+'">':'<div class="cover" data-z="'+b.id+'" style="cursor:pointer">'+esc(b.title)+'</div>'}).join("")+'</div>';return}
+ $("list").innerHTML=L.map(function(b){
+  var pct=b.total>0?Math.min(100,Math.round((b.read||0)/b.total*100)):(b.done?100:0);
+  var cov=b.cover?'<img class="cover" data-z="'+b.id+'" src="'+b.cover+'" alt="표지">':'<div class="cover" style="cursor:default">표지 없음</div>';
+  var dates=b.done?("시작 "+(b.start||"-")+" · 완료 "+(b.end||"-")):("시작 "+(b.start||"-"));
+  return'<div class="card'+(b.done?" done":"")+'">'+cov+'<div class="info"><div class="no">No.'+(b.no||"")+' · '+esc(dates)+'</div><div class="t">'+esc(b.title||"(제목 없음)")+'</div><div class="a">'+esc(b.author||"작가 미입력")+'</div><div class="bar"><i style="width:'+pct+'%"></i></div><div class="meta"><span>'+(b.total>0?(b.read||0)+" / "+b.total+"쪽":(b.read||0)+"쪽")+'</span><span>'+pct+'%</span></div><div class="acts"><button data-e="'+b.id+'">수정</button>'+(b.done?'<button data-u="'+b.id+'">다시 읽는 중</button>':'<button class="ok" data-d="'+b.id+'">다 읽었어요</button>')+'</div></div></div>'}).join("");
+}
+$("list").onclick=function(e){
+ var t=e.target,id,b;
+ if(id=t.getAttribute("data-z")){b=books.find(function(x){return x.id===id});if(b){zid=b.id;if(b.cover)$("zi").src=b.cover;else $("zi").removeAttribute("src");$("zc").textContent=b.title||"";$("zd").textContent=(b.author||"")+(b.end?" · "+b.end+" 완료":"");$("ovz").classList.add("on")}return}
+ if(id=t.getAttribute("data-e")){openForm(id);return}
+ if(id=t.getAttribute("data-d")){b=books.find(function(x){return x.id===id});if(!b)return;b.done=true;b.end=b.end||today();if(b.total>0)b.read=b.total;saveBook(b);return}
+ if(id=t.getAttribute("data-u")){b=books.find(function(x){return x.id===id});if(!b)return;b.done=false;saveBook(b)}
+};
+function closeZoom(){$("ovz").classList.remove("on");$("zi").removeAttribute("src")}
+$("ovz").onclick=closeZoom;
+$("ze").onclick=function(e){e.stopPropagation();closeZoom();if(zid)openForm(zid)};
+$("t0").onclick=function(){tab=0;render()};$("t1").onclick=function(){tab=1;render()};
+$("q").oninput=render;$("yr").onchange=render;
+function setView(n){view=n;ls("nb-view",n);render()}
+$("v0").onclick=function(){setView(0)};$("v1").onclick=function(){setView(1)};
+
+function setPrev(){$("pc").innerHTML=curCover?'<img src="'+curCover+'" style="width:100%;height:100%;object-fit:cover;border-radius:6px" alt="표지">':"표지";$("ocr").style.display=curCover?"block":"none"}
+function openForm(id){
+ editId=id||null;var b=id?books.find(function(x){return x.id===id}):null;
+ $("mt").textContent=b?"책 수정":"책 추가";
+ $("ft").value=b?b.title||"":"";$("fa").value=b?b.author||"":"";
+ $("ftot").value=b&&b.total?b.total:"";$("fr").value=b&&b.read?b.read:"";
+ $("fs2").value=b?b.start||"":today();$("fe").value=b?b.end||"":"";$("fd").checked=!!(b&&b.done);
+ curCover=b?b.cover||"":"";setPrev();$("ai").textContent="";$("chips").innerHTML="";$("fer").textContent="";
+ $("fdel").style.display=b?"block":"none";$("ovf").classList.add("on");
+}
+$("addbtn").onclick=function(){openForm(null)};
+$("fc").onclick=function(){$("ovf").classList.remove("on")};
+$("pick").onclick=function(){$("file").value="";$("file").click()};
+
+function shrink(file,max,q){return new Promise(function(res,rej){
+ var url=URL.createObjectURL(file),im=new Image();
+ im.onload=function(){var s=Math.min(1,max/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=Math.round(im.width*s);c.height=Math.round(im.height*s);c.getContext("2d").drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(url);res(c.toDataURL("image/jpeg",q))};
+ im.onerror=function(){rej(new Error("img"))};im.src=url})}
+async function makeCover(file){
+ var sz=[[800,.72],[640,.62],[520,.55],[420,.5]];
+ for(var i=0;i<sz.length;i++){var r=await shrink(file,sz[i][0],sz[i][1]);if(r.length<170000||i===sz.length-1)return r}
+}
+
+var RATIO=5.2/7.4,cb={x:0,y:0,w:0,h:0},cs=1,cUrl=null;
+function drawBox(){var b=$("cbox");b.style.left=cb.x+"px";b.style.top=cb.y+"px";b.style.width=cb.w+"px";b.style.height=cb.h+"px"}
+function openCrop(f){
+ if(cUrl)URL.revokeObjectURL(cUrl);
+ cUrl=URL.createObjectURL(f);var im=$("cimg");
+ $("ovc").classList.add("on");
+ im.onload=function(){var W=im.clientWidth,H=im.clientHeight;cs=im.naturalWidth/W;var h=Math.min(H*.85,W*.85/RATIO),w=h*RATIO;cb={x:(W-w)/2,y:(H-h)/2,w:w,h:h};drawBox()};
+ im.src=cUrl;
+}
+(function(){
+ var mode=null,sx=0,sy=0,o=null;
+ function down(m){return function(e){e.preventDefault();e.stopPropagation();mode=m;sx=e.clientX;sy=e.clientY;o={x:cb.x,y:cb.y,w:cb.w,h:cb.h};e.currentTarget.setPointerCapture(e.pointerId)}}
+ function move(e){
+  if(!mode)return;var W=$("cimg").clientWidth,H=$("cimg").clientHeight,dx=e.clientX-sx,dy=e.clientY-sy;
+  if(mode==="m"){cb.x=Math.max(0,Math.min(W-o.w,o.x+dx));cb.y=Math.max(0,Math.min(H-o.h,o.y+dy))}
+  else{var w=Math.max(50,Math.min(o.w+Math.max(dx,dy*RATIO),W-o.x,(H-o.y)*RATIO));cb.w=w;cb.h=w/RATIO}
+  drawBox();
+ }
+ function up(){mode=null}
+ $("cbox").addEventListener("pointerdown",down("m"));$("chandle").addEventListener("pointerdown",down("r"));
+ ["cbox","chandle"].forEach(function(i){$(i).addEventListener("pointermove",move);$(i).addEventListener("pointerup",up);$(i).addEventListener("pointercancel",up)});
+ $("cx").onclick=function(){$("ovc").classList.remove("on")};
+ $("cok").onclick=function(){
+  var im=$("cimg"),sw=cb.w*cs,sh=cb.h*cs,k=Math.min(1,900/sh),c=document.createElement("canvas");
+  c.width=Math.max(1,Math.round(sw*k));c.height=Math.max(1,Math.round(sh*k));
+  c.getContext("2d").drawImage(im,cb.x*cs,cb.y*cs,sw,sh,0,0,c.width,c.height);
+  $("ovc").classList.remove("on");
+  c.toBlob(function(bl){if(bl)afterPick(bl)},"image/jpeg",.9);
+ };
+})();
+$("file").onchange=function(){var f=$("file").files[0];if(f)openCrop(f)};
+async function afterPick(f){
+ try{curCover=await makeCover(f);setPrev();$("chips").innerHTML="";$("ai").textContent="표지 글자 읽기를 누르면 제목과 작가 후보를 찾아 줘요. 정확도는 낮을 수 있어요."}
+ catch(e){$("ai").textContent="사진을 읽지 못했어요. 다른 사진으로 해 보세요."}
+}
+$("ocr").onclick=async function(){
+ if(!curCover)return;
+ $("ai").textContent="글자를 읽는 중이에요. 처음에는 1~2분 걸릴 수 있어요.";$("chips").innerHTML="";
+ try{
+  if(!window.Tesseract){await new Promise(function(res,rej){var s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js";s.onload=res;s.onerror=rej;document.head.appendChild(s)})}
+  var r=await Tesseract.recognize(curCover,"kor+eng");
+  var lines=r.data.text.split("\n").map(function(s){return s.replace(/\s+/g," ").trim()}).filter(function(s){return s.length>=2&&/[가-힣A-Za-z0-9]/.test(s)}).slice(0,8);
+  if(!lines.length){$("ai").textContent="글자를 찾지 못했어요. 직접 적어 주세요.";return}
+  $("ai").textContent="읽은 글자예요. 맞는 줄의 버튼을 눌러 넣고, 틀리면 고쳐 주세요.";
+  $("chips").innerHTML=lines.map(function(l){return'<div class="chip"><span>'+esc(l)+'</span><button data-k="t" data-v="'+esc(l)+'">제목</button><button data-k="a" data-v="'+esc(l)+'">작가</button></div>'}).join("");
+ }catch(e){$("ai").textContent="글자를 읽지 못했어요. 인터넷 연결을 확인하거나 직접 적어 주세요."}
+};
+$("chips").onclick=function(e){var k=e.target.getAttribute("data-k");if(!k)return;var v=e.target.getAttribute("data-v");if(k==="t")$("ft").value=v;else $("fa").value=v};
+$("fd").onchange=function(){if($("fd").checked&&!$("fe").value)$("fe").value=today()};
+$("fok").onclick=function(){
+ var t=$("ft").value.trim();if(!t){$("fer").textContent="제목을 적어 주세요.";return}
+ var old=editId?books.find(function(x){return x.id===editId}):null;
+ var no=old?old.no:books.reduce(function(m,x){return Math.max(m,x.no||0)},0)+1;
+ var tot=parseInt($("ftot").value)||0,rd=parseInt($("fr").value)||0,dn=$("fd").checked;
+ if(dn&&tot>0)rd=tot;
+ var b={id:old?old.id:"b"+Date.now().toString(36)+Math.random().toString(36).slice(2,5),no:no,title:t,author:$("fa").value.trim(),total:tot,read:rd,start:$("fs2").value,end:dn?($("fe").value||today()):$("fe").value,done:dn,cover:curCover};
+ $("ovf").classList.remove("on");saveBook(b);
+};
+$("fdel").onclick=function(){if(!editId)return;if($("fdel").dataset.c!=="1"){$("fdel").dataset.c="1";$("fdel").textContent="한 번 더 누르면 삭제";setTimeout(function(){$("fdel").dataset.c="";$("fdel").textContent="삭제"},3000);return}
+ $("fdel").dataset.c="";$("fdel").textContent="삭제";$("ovf").classList.remove("on");delBook(editId)};
+
+$("bk").onclick=function(){
+ var data=JSON.stringify({app:"nabang-reading-log",title:title,books:books});
+ var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([data],{type:"application/json"}));
+ a.download="독서목록-백업-"+today()+".json";document.body.appendChild(a);a.click();a.remove();
+ $("note").textContent="백업 파일을 저장했어요.";
+};
+$("rs").onclick=function(){$("rsf").value="";$("rsf").click()};
+$("rsf").onchange=async function(){
+ var f=$("rsf").files[0];if(!f)return;
+ try{
+  var j=JSON.parse(await f.text());if(!j||!Array.isArray(j.books))throw 0;
+  var n=0;for(var i=0;i<j.books.length;i++){var b=j.books[i];if(!b||!b.id)continue;var k=books.findIndex(function(x){return x.id===b.id});if(k<0)books.push(b);else books[k]=b;await putBook(b);n++}
+  if(j.title&&!lg("nb-title")){title=j.title;ls("nb-title",title);setTitle()}
+  render();$("note").textContent=n+"권을 불러왔어요.";
+ }catch(e){$("note").textContent="백업 파일을 읽지 못했어요."}
+};
+
+render();
+openDb().then(function(d){db=d;return pr(st("readonly").getAll())}).then(function(all){books=all||[];render();if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}).catch(function(){$("note").textContent="이 브라우저에서는 저장이 안 될 수 있어요. 백업을 자주 해 주세요."});
+})();
+</script>
+</body>
+</html>
