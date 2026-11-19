@@ -50,7 +50,7 @@ input,select{font:inherit;color:var(--ink);background:var(--card);border:1px sol
 .modal h2{margin:0 0 10px;font-size:1.1rem}
 .f{margin-bottom:10px}
 .f label{display:block;font-size:.8rem;color:var(--sub);margin-bottom:3px}
-.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.g2{display:grid;grid-template-columns:repeat(auto-fit,minmax(9rem,1fr));gap:8px}.g2>div{min-width:0}.g2 input{min-width:0;max-width:100%}
 .prev{display:flex;gap:12px;align-items:center;margin-bottom:10px}
 .prev .cover{cursor:default}
 .hint{font-size:.85rem;color:var(--sub)}
@@ -252,7 +252,7 @@ $("ladd").onclick=function(){
  var ex=b.log.find(function(x){return x.d===d});
  if(ex)ex.p+=p;else b.log.push({i:"l"+Date.now().toString(36)+Math.random().toString(36).slice(2,4),d:d,p:p});
  b.read=(b.read||0)+p;
- $("lp").value="";saveBook(b);drawLog();
+ $("lp").value="";$("ovl").classList.remove("on");saveBook(b);
 };
 $("llist").onclick=function(e){
  var k=e.target.getAttribute("data-x");if(!k)return;
