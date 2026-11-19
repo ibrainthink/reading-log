@@ -57,6 +57,11 @@ input,select{font:inherit;color:var(--ink);background:var(--card);border:1px sol
 .zoom{background:rgba(0,0,0,.92);align-items:center;padding:10px}
 .zoom img{max-width:100%;max-height:72vh;border-radius:6px}
 .note{font-size:.8rem;color:var(--mute);text-align:center;margin:6px 0}
+.bar.seg{display:flex}.bar.seg i{flex:none;height:100%}
+.lg{display:flex;flex-wrap:wrap;gap:2px 10px;margin-top:6px;font-size:.8rem;color:var(--sub)}
+.lg b{display:inline-block;width:.6rem;height:.6rem;border-radius:3px;margin-right:4px}
+.lrow{display:flex;align-items:center;gap:8px;padding:6px 0;border-top:1px solid var(--line)}
+.lrow span{flex:1}.lrow button{font-size:.8rem;padding:.2rem .6rem;min-height:2rem}
 .err{color:var(--danger);font-size:.85rem}
 .ovc{z-index:20;align-items:center}
 .cwrap{background:var(--card);border-radius:14px;padding:12px;width:100%;max-width:560px}
@@ -126,6 +131,14 @@ input,select{font:inherit;color:var(--ink);background:var(--card);border:1px sol
 </div>
 </div></div>
 
+<div class="ov ovc" id="ovl"><div class="cwrap">
+<div id="lt" style="margin:0 0 8px;font-size:1.05rem;font-weight:600"></div>
+<div class="g2"><div class="f"><label for="ld">날짜</label><input id="ld" type="date"></div><div class="f"><label for="lp">그날 읽은 쪽수</label><input id="lp" type="number" inputmode="numeric" min="1"></div></div>
+<button class="pri" id="ladd" style="width:100%">기록 추가</button>
+<div class="err" id="ler"></div>
+<div id="llist" style="margin-top:10px"></div>
+<div class="row" style="margin:12px 0 0"><button id="lclose" style="flex:1">닫기</button></div>
+</div></div>
 <div class="ov ovc" id="ovc"><div class="cwrap">
 <div class="hint" style="margin-bottom:8px">책 표지만 남도록 흰 테두리를 옮기고, 오른쪽 아래 모서리를 끌어 크기를 맞추세요.</div>
 <div class="cw" id="cw"><img id="cimg" alt="올린 사진"><div id="cbox"><div id="chandle"></div></div></div>
@@ -189,12 +202,13 @@ function render(){
   var pct=b.total>0?Math.min(100,Math.round((b.read||0)/b.total*100)):(b.done?100:0);
   var cov=b.cover?'<img class="cover" data-z="'+b.id+'" src="'+b.cover+'" alt="표지">':'<div class="cover" style="cursor:default">표지 없음</div>';
   var dates=b.done?("시작 "+(b.start||"-")+" · 완료 "+(b.end||"-")):("시작 "+(b.start||"-"));
-  return'<div class="card'+(b.done?" done":"")+'">'+cov+'<div class="info"><div class="no">No.'+(b.no||"")+' · '+esc(dates)+'</div><div class="t">'+esc(b.title||"(제목 없음)")+'</div><div class="a">'+esc(b.author||"작가 미입력")+'</div><div class="bar"><i style="width:'+pct+'%"></i></div><div class="meta"><span>'+(b.total>0?(b.read||0)+" / "+b.total+"쪽":(b.read||0)+"쪽")+'</span><span>'+pct+'%</span></div><div class="acts"><button data-e="'+b.id+'">수정</button>'+(b.done?'<button data-u="'+b.id+'">다시 읽는 중</button>':'<button class="ok" data-d="'+b.id+'">다 읽었어요</button>')+'</div></div></div>'}).join("");
+  return'<div class="card'+(b.done?" done":"")+'">'+cov+'<div class="info"><div class="no">No.'+(b.no||"")+' · '+esc(dates)+'</div><div class="t">'+esc(b.title||"(제목 없음)")+'</div><div class="a">'+esc(b.author||"작가 미입력")+'</div>'+barHtml(b,pct)+'<div class="meta"><span>'+(b.total>0?(b.read||0)+" / "+b.total+"쪽":(b.read||0)+"쪽")+'</span><span>'+pct+'%</span></div><div class="acts"><button data-e="'+b.id+'">수정</button><button data-l="'+b.id+'">읽은 기록</button>'+(b.done?'<button data-u="'+b.id+'">다시 읽는 중</button>':'<button class="ok" data-d="'+b.id+'">다 읽었어요</button>')+'</div></div></div>'}).join("");
 }
 $("list").onclick=function(e){
  var t=e.target,id,b;
  if(id=t.getAttribute("data-z")){b=books.find(function(x){return x.id===id});if(b){zid=b.id;if(b.cover)$("zi").src=b.cover;else $("zi").removeAttribute("src");$("zc").textContent=b.title||"";$("zd").textContent=(b.author||"")+(b.end?" · "+b.end+" 완료":"");$("ovz").classList.add("on")}return}
  if(id=t.getAttribute("data-e")){openForm(id);return}
+ if(id=t.getAttribute("data-l")){openLog(id);return}
  if(id=t.getAttribute("data-d")){b=books.find(function(x){return x.id===id});if(!b)return;b.done=true;b.end=b.end||today();if(b.total>0)b.read=b.total;saveBook(b);return}
  if(id=t.getAttribute("data-u")){b=books.find(function(x){return x.id===id});if(!b)return;b.done=false;saveBook(b)}
 };
@@ -206,6 +220,48 @@ $("q").oninput=render;$("yr").onchange=render;
 function setView(n){view=n;ls("nb-view",n);render()}
 $("v0").onclick=function(){setView(0)};$("v1").onclick=function(){setView(1)};
 
+var RB=["#e5484d","#f08a24","#f2c230","#3fa34d","#2f7fe0","#3b3fb0","#8a4fd0"],lid=null;
+function logSum(b){return(b.log||[]).reduce(function(s,x){return s+(x.p||0)},0)}
+function logSorted(b){return(b.log||[]).slice().sort(function(a,c){return a.d<c.d?-1:a.d>c.d?1:0})}
+function md(d){return d?parseInt(d.slice(5,7))+"/"+parseInt(d.slice(8,10)):"-"}
+function barHtml(b,pct){
+ var L=logSorted(b);
+ if(!L.length)return'<div class="bar"><i style="width:'+pct+'%"></i></div>';
+ var base=Math.max(0,(b.read||0)-logSum(b)),den=b.total>0?b.total:Math.max(b.read||0,1),segs=[],lg=[],used=0;
+ if(base>0){segs.push([base,"#b4b2a9"]);lg.push(["#b4b2a9","기록 전 "+base+"쪽"])}
+ L.forEach(function(x,i){var c=RB[i%7];segs.push([x.p,c]);lg.push([c,md(x.d)+" · "+x.p+"쪽"])});
+ var h='<div class="bar seg">'+segs.map(function(s){var w=Math.max(0,Math.min(100-used,s[0]/den*100));used+=w;return'<i style="width:'+w+'%;background:'+s[1]+'"></i>'}).join("")+'</div>';
+ return h+'<div class="lg">'+lg.slice(-8).map(function(l){return'<span><b style="background:'+l[0]+'"></b>'+esc(l[1])+'</span>'}).join("")+'</div>';
+}
+function drawLog(){
+ var b=books.find(function(x){return x.id===lid});if(!b)return;
+ var L=logSorted(b);
+ $("llist").innerHTML=L.length?L.map(function(x,i){return'<div class="lrow"><span><b style="display:inline-block;width:.7rem;height:.7rem;border-radius:3px;margin-right:6px;background:'+RB[i%7]+'"></b>'+md(x.d)+' · '+x.p+'쪽</span><button class="del" data-x="'+x.i+'">삭제</button></div>'}).join(""):'<div class="hint">아직 기록이 없어요. 읽은 쪽수를 적고 기록 추가를 눌러요.</div>';
+}
+function openLog(id){
+ var b=books.find(function(x){return x.id===id});if(!b)return;
+ lid=id;$("lt").textContent=b.title||"";$("ld").value=today();$("lp").value="";$("ler").textContent="";drawLog();$("ovl").classList.add("on");
+}
+$("ladd").onclick=function(){
+ var b=books.find(function(x){return x.id===lid});if(!b)return;
+ var p=parseInt($("lp").value),d=$("ld").value;
+ if(!d){$("ler").textContent="날짜를 골라 주세요.";return}
+ if(!(p>0)){$("ler").textContent="읽은 쪽수를 적어 주세요.";return}
+ $("ler").textContent="";
+ b.log=b.log||[];
+ var ex=b.log.find(function(x){return x.d===d});
+ if(ex)ex.p+=p;else b.log.push({i:"l"+Date.now().toString(36)+Math.random().toString(36).slice(2,4),d:d,p:p});
+ b.read=(b.read||0)+p;
+ $("lp").value="";saveBook(b);drawLog();
+};
+$("llist").onclick=function(e){
+ var k=e.target.getAttribute("data-x");if(!k)return;
+ var b=books.find(function(x){return x.id===lid});if(!b)return;
+ var x=(b.log||[]).find(function(y){return y.i===k});if(!x)return;
+ b.log=b.log.filter(function(y){return y.i!==k});b.read=Math.max(0,(b.read||0)-x.p);
+ saveBook(b);drawLog();
+};
+$("lclose").onclick=function(){$("ovl").classList.remove("on")};
 function setPrev(){$("pc").innerHTML=curCover?'<img src="'+curCover+'" style="width:100%;height:100%;object-fit:cover;border-radius:6px" alt="표지">':"표지";$("ocr").style.display=curCover?"block":"none"}
 function openForm(id){
  editId=id||null;var b=id?books.find(function(x){return x.id===id}):null;
@@ -284,7 +340,7 @@ $("fok").onclick=function(){
  var no=old?old.no:books.reduce(function(m,x){return Math.max(m,x.no||0)},0)+1;
  var tot=parseInt($("ftot").value)||0,rd=parseInt($("fr").value)||0,dn=$("fd").checked;
  if(dn&&tot>0)rd=tot;
- var b={id:old?old.id:"b"+Date.now().toString(36)+Math.random().toString(36).slice(2,5),no:no,title:t,author:$("fa").value.trim(),total:tot,read:rd,start:$("fs2").value,end:dn?($("fe").value||today()):$("fe").value,done:dn,cover:curCover};
+ var b={id:old?old.id:"b"+Date.now().toString(36)+Math.random().toString(36).slice(2,5),no:no,title:t,author:$("fa").value.trim(),total:tot,read:rd,start:$("fs2").value,end:dn?($("fe").value||today()):$("fe").value,done:dn,cover:curCover,log:(old&&old.log)||[]};
  $("ovf").classList.remove("on");saveBook(b);
 };
 $("fdel").onclick=function(){if(!editId)return;if($("fdel").dataset.c!=="1"){$("fdel").dataset.c="1";$("fdel").textContent="한 번 더 누르면 삭제";setTimeout(function(){$("fdel").dataset.c="";$("fdel").textContent="삭제"},3000);return}
