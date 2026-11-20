@@ -133,7 +133,8 @@ input,select{font:inherit;color:var(--ink);background:var(--card);border:1px sol
 
 <div class="ov ovc" id="ovl"><div class="cwrap">
 <div id="lt" style="margin:0 0 8px;font-size:1.05rem;font-weight:600"></div>
-<div class="g2"><div class="f"><label for="ld">날짜</label><input id="ld" type="date"></div><div class="f"><label for="lp">그날 읽은 쪽수</label><input id="lp" type="number" inputmode="numeric" min="1"></div></div>
+<div class="g2"><div class="f"><label for="ld">날짜</label><input id="ld" type="date"></div><div class="f"><label for="lp">몇 쪽까지 읽었어요?</label><input id="lp" type="number" inputmode="numeric" min="1"></div></div>
+<div class="hint" id="lcur" style="margin-bottom:8px"></div>
 <button class="pri" id="ladd" style="width:100%">기록 추가</button>
 <div class="err" id="ler"></div>
 <div id="llist" style="margin-top:10px"></div>
@@ -240,18 +241,21 @@ function drawLog(){
 }
 function openLog(id){
  var b=books.find(function(x){return x.id===id});if(!b)return;
- lid=id;$("lt").textContent=b.title||"";$("ld").value=today();$("lp").value="";$("ler").textContent="";drawLog();$("ovl").classList.add("on");
+ lid=id;$("lt").textContent=b.title||"";$("ld").value=today();$("lp").value="";$("lcur").textContent="지금까지 "+(b.read||0)+"쪽"+(b.total>0?" / 총 "+b.total+"쪽":"")+" 읽었어요. 오늘은 몇 쪽까지 읽었는지 적어요.";$("ler").textContent="";drawLog();$("ovl").classList.add("on");
 }
 $("ladd").onclick=function(){
  var b=books.find(function(x){return x.id===lid});if(!b)return;
- var p=parseInt($("lp").value),d=$("ld").value;
+ var to=parseInt($("lp").value),d=$("ld").value,cur=b.read||0;
  if(!d){$("ler").textContent="날짜를 골라 주세요.";return}
- if(!(p>0)){$("ler").textContent="읽은 쪽수를 적어 주세요.";return}
+ if(!(to>0)){$("ler").textContent="몇 쪽까지 읽었는지 적어 주세요.";return}
+ if(b.total>0&&to>b.total){$("ler").textContent="총 쪽수("+b.total+"쪽)보다 커요. 다시 확인해 주세요.";return}
+ if(to<=cur){$("ler").textContent="지금까지 "+cur+"쪽을 읽었어요. 그보다 큰 쪽수를 적어 주세요.";return}
+ var p=to-cur;
  $("ler").textContent="";
  b.log=b.log||[];
  var ex=b.log.find(function(x){return x.d===d});
  if(ex)ex.p+=p;else b.log.push({i:"l"+Date.now().toString(36)+Math.random().toString(36).slice(2,4),d:d,p:p});
- b.read=(b.read||0)+p;
+ b.read=to;
  $("lp").value="";$("ovl").classList.remove("on");saveBook(b);
 };
 $("llist").onclick=function(e){
